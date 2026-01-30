@@ -123,20 +123,32 @@ export function Widget() {
             {/* Spinning indicator when timer is active */}
             {activeProject && (
               <svg
-                className="absolute inset-0 w-20 h-20 animate-spin"
-                style={{ animationDuration: '3s' }}
-                viewBox="0 0 64 64"
+                className="absolute inset-0 w-20 h-20"
+                viewBox="0 0 128 128"
               >
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="30"
-                  fill="none"
-                  stroke={activeProject.color}
-                  strokeWidth="3"
-                  strokeDasharray="140 48"
-                  strokeLinecap="round"
-                />
+                <defs>
+                  <linearGradient id="spinnerGradient" gradientUnits="userSpaceOnUse" x1="64" y1="4" x2="64" y2="124">
+                    <stop offset="0%" stopColor={activeProject.color} stopOpacity="0" />
+                    <stop offset="100%" stopColor={activeProject.color} stopOpacity="1" />
+                  </linearGradient>
+                </defs>
+                <g>
+                  <path
+                    d="M 64 4 A 60 60 0 0 1 64 124"
+                    fill="none"
+                    stroke="url(#spinnerGradient)"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                  />
+                  <animateTransform
+                    attributeName="transform"
+                    type="rotate"
+                    from="0 64 64"
+                    to="360 64 64"
+                    dur="3s"
+                    repeatCount="indefinite"
+                  />
+                </g>
               </svg>
             )}
             {/* Inner colored circle with icon */}
