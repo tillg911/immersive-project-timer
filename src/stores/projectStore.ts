@@ -6,6 +6,7 @@ export interface Project {
   name: string;
   color: string;
   icon: string;
+  archived?: boolean;
 }
 
 interface ProjectStore {
@@ -14,6 +15,8 @@ interface ProjectStore {
   updateProject: (id: string, updates: Partial<Omit<Project, 'id'>>) => void;
   removeProject: (id: string) => void;
   getProject: (id: string) => Project | undefined;
+  archiveProject: (id: string) => void;
+  unarchiveProject: (id: string) => void;
 }
 
 const defaultProjects: Project[] = [
@@ -48,6 +51,20 @@ export const useProjectStore = create<ProjectStore>()(
         })),
 
       getProject: (id) => get().projects.find((p) => p.id === id),
+
+      archiveProject: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === id ? { ...p, archived: true } : p
+          ),
+        })),
+
+      unarchiveProject: (id) =>
+        set((state) => ({
+          projects: state.projects.map((p) =>
+            p.id === id ? { ...p, archived: false } : p
+          ),
+        })),
     }),
     {
       name: 'project-storage',

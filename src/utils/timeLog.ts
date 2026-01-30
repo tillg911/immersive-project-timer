@@ -21,13 +21,9 @@ export interface TimeLogEntry {
 const LOGS_DIR = 'time-logs';
 
 async function ensureLogsDir() {
-  try {
-    const dirExists = await exists(LOGS_DIR, { baseDir: BaseDirectory.AppData });
-    if (!dirExists) {
-      await mkdir(LOGS_DIR, { baseDir: BaseDirectory.AppData, recursive: true });
-    }
-  } catch (error) {
-    console.error('Failed to create logs directory:', error);
+  const dirExists = await exists(LOGS_DIR, { baseDir: BaseDirectory.AppData });
+  if (!dirExists) {
+    await mkdir(LOGS_DIR, { baseDir: BaseDirectory.AppData, recursive: true });
   }
 }
 

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import type { ComponentType } from 'react';
-import { Plus, Pencil, Trash2, Check, X, Circle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Check, X, Circle, Archive, ArchiveRestore } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { IconPicker } from './IconPicker';
 import { useProjectStore, type Project } from '../stores/projectStore';
+import { useTimerStore } from '../stores/timerStore';
 
 type IconProps = { size?: number; style?: React.CSSProperties };
 
@@ -25,7 +26,8 @@ interface ProjectFormData {
 }
 
 export function ProjectEditor() {
-  const { projects, addProject, updateProject, removeProject } = useProjectStore();
+  const { projects, addProject, updateProject, removeProject, archiveProject, unarchiveProject } = useProjectStore();
+  const { getProjectTime } = useTimerStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -81,6 +83,22 @@ export function ProjectEditor() {
       setConfirmDeleteId(id);
     }
   };
+
+  const handleArchive = (id: string) => {
+    archiveProject(id);
+    cancel();
+  };
+
+  const handleUnarchive = (id: string) => {
+    unarchiveProject(id);
+  };
+
+  const canDeleteArchivedProject = (projectId: string) => {
+    return getProjectTime(projectId) === 0;
+  };
+
+  const activeProjects = projects.filter(p => !p.archived);
+  const archivedProjects = projects.filter(p => p.archived);
 
   const renderForm = () => (
     <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
@@ -144,13 +162,24 @@ export function ProjectEditor() {
 
   return (
     <div className="space-y-3">
-      {/* Project List */}
+      {/* Active Project List */}
       <div className="space-y-2">
-        {projects.map((project) => {
+        {activeProjects.map((project) => {
           const IconComponent = (Icons as unknown as Record<string, ComponentType<IconProps>>)[project.icon] || Circle;
 
           if (editingId === project.id) {
-            return <div key={project.id}>{renderForm()}</div>;
+            return (
+              <div key={project.id}>
+                {renderForm()}
+                <button
+                  onClick={() => handleArchive(project.id)}
+                  className="mt-2 w-full p-2 text-xs text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors flex items-center justify-center gap-1 border border-gray-200"
+                >
+                  <Archive size={14} />
+                  Archive Project
+                </button>
+              </div>
+            );
           }
 
           return (
@@ -203,6 +232,57 @@ export function ProjectEditor() {
           <Plus size={16} />
           Add Project
         </button>
+      )}
+
+      {/* Archived Projects */}
+      {archivedProjects.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <h3 className="text-xs font-medium text-gray-500 mb-2 flex items-center gap-1">
+            <Archive size={12} />
+            Archived Projects
+          </h3>
+          <div className="space-y-2">
+            {archivedProjects.map((project) => {
+              const IconComponent = (Icons as unknown as Record<string, ComponentType<IconProps>>)[project.icon] || Circle;
+              const canDelete = canDeleteArchivedProject(project.id);
+
+              return (
+                <div
+                  key={project.id}
+                  className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-200 opacity-75"
+                >
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: `${project.color}20` }}
+                    >
+                      <IconComponent size={16} style={{ color: project.color }} />
+                    </div>
+                    <span className="text-sm font-medium text-gray-500">{project.name}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleUnarchive(project.id)}
+                      className="p-1.5 text-gray-400 hover:text-green-500 hover:bg-gray-100 rounded transition-colors"
+                      title="Restore project"
+                    >
+                      <ArchiveRestore size={14} />
+                    </button>
+                    {canDelete && (
+                      <button
+                        onClick={() => handleDelete(project.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded transition-colors"
+                        title="Delete project"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );

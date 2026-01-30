@@ -221,13 +221,13 @@ export function Widget() {
 
             {/* Projects Grid */}
             <div className="p-3">
-              {projects.length === 0 ? (
+              {projects.filter(p => !p.archived).length === 0 ? (
                 <div className="text-center py-6 text-gray-500 text-sm">
                   No projects yet. Click the gear icon to add one.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 gap-2">
-                  {projects.map((project) => (
+                  {projects.filter(p => !p.archived).map((project) => (
                     <ProjectButton key={project.id} project={project} />
                   ))}
                 </div>
