@@ -1,5 +1,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { saveCurrentDayLog } from '../utils/timeLog';
+import { useProjectStore } from './projectStore';
+
+// Maximum daily time: 12 hours in milliseconds
+export const MAX_DAILY_TIME_MS = 12 * 60 * 60 * 1000;
 
 export interface TimerSession {
   startTime: number;
@@ -18,6 +23,7 @@ interface TimerState {
   activeStartTime: number | null;
   projectTimes: Record<string, ProjectTime>;
   currentDate: string;
+  isDayLimitReached: boolean;
 }
 
 interface TimerStore extends TimerState {
@@ -28,6 +34,7 @@ interface TimerStore extends TimerState {
   updateProjectTime: (projectId: string, newTotalTime: number) => void;
   resetDay: () => Record<string, ProjectTime>;
   getActiveElapsed: () => number;
+  tick: () => void;
 }
 
 const getToday = () => new Date().toISOString().split('T')[0];
@@ -39,10 +46,23 @@ export const useTimerStore = create<TimerStore>()(
       activeStartTime: null,
       projectTimes: {},
       currentDate: getToday(),
+      isDayLimitReached: false,
 
       startTimer: (projectId: string) => {
         const state = get();
         const now = Date.now();
+
+        // Don't start if daily limit is reached
+        if (state.isDayLimitReached) {
+          return;
+        }
+
+        // Check if starting would exceed the limit
+        const currentTotal = state.getTodayTotal();
+        if (currentTotal >= MAX_DAILY_TIME_MS) {
+          set({ isDayLimitReached: true });
+          return;
+        }
 
         // If there's an active timer, stop it first
         if (state.activeProjectId && state.activeStartTime) {
@@ -190,6 +210,7 @@ export const useTimerStore = create<TimerStore>()(
           activeStartTime: null,
           projectTimes: {},
           currentDate: getToday(),
+          isDayLimitReached: false,
         });
 
         return oldTimes;
@@ -200,6 +221,55 @@ export const useTimerStore = create<TimerStore>()(
         if (!state.activeProjectId || !state.activeStartTime) return 0;
         return Date.now() - state.activeStartTime;
       },
+
+      tick: () => {
+        const state = get();
+        const now = Date.now();
+
+        // Only tick if there's an active timer
+        if (!state.activeProjectId || !state.activeStartTime) {
+          return;
+        }
+
+        // Check if daily limit is reached
+        const currentTotal = state.getTodayTotal();
+        if (currentTotal >= MAX_DAILY_TIME_MS) {
+          // Stop the timer, but cap the elapsed time so we don't exceed 12h
+          const baseTime = Object.values(state.projectTimes).reduce(
+            (sum, pt) => sum + pt.totalTime,
+            0
+          );
+          const maxElapsed = MAX_DAILY_TIME_MS - baseTime;
+          const actualElapsed = Math.min(now - state.activeStartTime, maxElapsed);
+
+          const currentProjectTime = state.projectTimes[state.activeProjectId] || {
+            projectId: state.activeProjectId,
+            totalTime: 0,
+            sessions: [],
+          };
+
+          set({
+            activeProjectId: null,
+            activeStartTime: null,
+            isDayLimitReached: true,
+            projectTimes: {
+              ...state.projectTimes,
+              [state.activeProjectId]: {
+                ...currentProjectTime,
+                totalTime: currentProjectTime.totalTime + actualElapsed,
+                sessions: [
+                  ...currentProjectTime.sessions,
+                  {
+                    startTime: state.activeStartTime,
+                    endTime: state.activeStartTime + actualElapsed,
+                    duration: actualElapsed,
+                  },
+                ],
+              },
+            },
+          });
+        }
+      },
     }),
     {
       name: 'timer-storage',
@@ -207,3 +277,14 @@ export const useTimerStore = create<TimerStore>()(
     }
   )
 );
+
+// Subscribe to store changes and auto-save to JSON file
+useTimerStore.subscribe((state, prevState) => {
+  // Only save when projectTimes change (timer started/stopped)
+  if (state.projectTimes !== prevState.projectTimes) {
+    const projects = useProjectStore.getState().projects;
+    saveCurrentDayLog(state.projectTimes, projects).catch((error) => {
+      console.error('Failed to auto-save time log:', error);
+    });
+  }
+});

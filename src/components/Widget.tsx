@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback, type ComponentType } from 'react';
-import { Timer, Settings, GripVertical, Pin, PinOff } from 'lucide-react';
+import { useState, useEffect, useRef, type ComponentType } from 'react';
+import { Timer, Settings, GripVertical, Pin, PinOff, AlertCircle } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { ProjectButton } from './ProjectButton';
 import { SettingsModal } from './SettingsModal';
@@ -19,7 +19,7 @@ export function Widget() {
   const justUnpinnedRef = useRef(false);
 
   const { projects, getProject } = useProjectStore();
-  const { getTodayTotal, activeProjectId, getProjectTime } = useTimerStore();
+  const { getTodayTotal, activeProjectId, getProjectTime, tick, isDayLimitReached } = useTimerStore();
 
   const activeProject = activeProjectId ? getProject(activeProjectId) : null;
   const ActiveIcon = activeProject
@@ -32,6 +32,8 @@ export function Widget() {
 
   useEffect(() => {
     const updateTimes = () => {
+      // Call tick to check daily limit
+      tick();
       setTotalTime(getTodayTotal());
       if (activeProjectId) {
         setActiveElapsed(getProjectTime(activeProjectId));
@@ -41,7 +43,7 @@ export function Widget() {
 
     const interval = setInterval(updateTimes, 1000);
     return () => clearInterval(interval);
-  }, [getTodayTotal, activeProjectId, getProjectTime]);
+  }, [getTodayTotal, activeProjectId, getProjectTime, tick]);
 
   const today = new Date().toLocaleDateString('en-US', {
     month: 'short',
@@ -206,6 +208,16 @@ export function Widget() {
                 </button>
               </div>
             </div>
+
+            {/* Status Messages */}
+            {isDayLimitReached && (
+              <div className="mx-3 mt-3 p-2 bg-amber-500/20 border border-amber-500/40 rounded-lg flex items-center gap-2">
+                <AlertCircle className="text-amber-500 flex-shrink-0" size={16} />
+                <span className="text-amber-200 text-xs">
+                  12h Tageslimit erreicht
+                </span>
+              </div>
+            )}
 
             {/* Projects Grid */}
             <div className="p-3">

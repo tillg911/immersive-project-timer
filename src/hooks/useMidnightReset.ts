@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useTimerStore } from '../stores/timerStore';
 import { useProjectStore } from '../stores/projectStore';
-import { saveTimeLog } from '../utils/timeLog';
+import { saveTimeLog, saveCurrentDayLog } from '../utils/timeLog';
 
 export function useMidnightReset() {
-  const { currentDate, resetDay } = useTimerStore();
+  const { currentDate, resetDay, projectTimes } = useTimerStore();
   const { projects } = useProjectStore();
   const hasCheckedRef = useRef(false);
 
@@ -36,4 +36,22 @@ export function useMidnightReset() {
 
     return () => clearInterval(interval);
   }, [currentDate, resetDay, projects]);
+
+  // Periodic auto-save every 5 minutes as backup
+  useEffect(() => {
+    const autoSave = async () => {
+      if (Object.keys(projectTimes).length > 0) {
+        try {
+          await saveCurrentDayLog(projectTimes, projects);
+        } catch (error) {
+          console.error('Failed to auto-save time log:', error);
+        }
+      }
+    };
+
+    // Auto-save every 5 minutes (300000ms)
+    const interval = setInterval(autoSave, 300000);
+
+    return () => clearInterval(interval);
+  }, [projectTimes, projects]);
 }

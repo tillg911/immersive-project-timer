@@ -98,6 +98,14 @@ export async function updateTimeLogEntry(
   });
 }
 
+export async function saveCurrentDayLog(
+  projectTimes: Record<string, ProjectTime>,
+  projects: Project[]
+): Promise<void> {
+  const today = new Date().toISOString().split('T')[0];
+  await saveTimeLog(today, projectTimes, projects);
+}
+
 export async function getAllLogDates(): Promise<string[]> {
   // Since Tauri fs doesn't have readDir in the same way,
   // we'll check for common date patterns
