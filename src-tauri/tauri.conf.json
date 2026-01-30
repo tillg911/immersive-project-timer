@@ -15,17 +15,20 @@
       {
         "title": "Project Timer",
         "width": 320,
-        "height": 280,
+        "minHeight": 280,
+        "maxHeight": 500,
         "resizable": false,
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": true,
         "skipTaskbar": true,
+        "backgroundColor": "#00000000",
         "shadow": false,
         "x": 100,
         "y": 100
       }
     ],
+    "macOSPrivateApi": true,
     "security": {
       "csp": null
     }

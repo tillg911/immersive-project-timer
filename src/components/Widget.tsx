@@ -114,16 +114,16 @@ export function Widget() {
         {/* Collapsed State */}
         <div
           className={`
-            transition-all duration-300 ease-in-out cursor-move
+            transition-all duration-300 ease-in-out cursor-move bg-transparent
             ${isExpanded ? 'opacity-0 scale-75 pointer-events-none absolute' : 'opacity-100 scale-100'}
           `}
           onMouseDown={startDrag}
         >
-          <div className="relative w-16 h-16">
+          <div className="relative w-20 h-20">
             {/* Spinning indicator when timer is active */}
             {activeProject && (
               <svg
-                className="absolute inset-0 w-16 h-16 animate-spin"
+                className="absolute inset-0 w-20 h-20 animate-spin"
                 style={{ animationDuration: '3s' }}
                 viewBox="0 0 64 64"
               >
@@ -150,8 +150,8 @@ export function Widget() {
             >
               {activeProject ? (
                 <>
-                  <ActiveIcon className="text-white" size={14} />
-                  <span className="text-white text-[8px] font-mono font-bold leading-tight">
+                  <ActiveIcon className="text-white mb-1" size={20} />
+                  <span className="text-white text-[10px] font-mono font-bold leading-tight">
                     {formatTimeCompact(activeElapsed)}
                   </span>
                 </>
@@ -226,7 +226,7 @@ export function Widget() {
                   No projects yet. Click the gear icon to add one.
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   {projects.map((project) => (
                     <ProjectButton key={project.id} project={project} />
                   ))}

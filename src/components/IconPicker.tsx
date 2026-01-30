@@ -32,7 +32,6 @@ const AVAILABLE_ICONS = [
   'Users',
   'User',
   'Settings',
-  'Tool',
   'Wrench',
   'Lightbulb',
   'Target',
@@ -57,6 +56,7 @@ export function IconPicker({ value, onChange, color = '#6366F1' }: IconPickerPro
     <div className="grid grid-cols-8 gap-1 p-2 bg-gray-100 rounded-lg max-h-32 overflow-y-auto">
       {AVAILABLE_ICONS.map((iconName) => {
         const IconComponent = (Icons as unknown as Record<string, ComponentType<IconProps>>)[iconName];
+        if (!IconComponent) return null;
         const isSelected = value === iconName;
 
         return (

@@ -28,6 +28,7 @@ export function ProjectEditor() {
   const { projects, addProject, updateProject, removeProject } = useProjectStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
     color: COLORS[0],
@@ -73,8 +74,11 @@ export function ProjectEditor() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this project?')) {
+    if (confirmDeleteId === id) {
       removeProject(id);
+      setConfirmDeleteId(null);
+    } else {
+      setConfirmDeleteId(id);
     }
   };
 
@@ -172,7 +176,13 @@ export function ProjectEditor() {
                 </button>
                 <button
                   onClick={() => handleDelete(project.id)}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-gray-100 rounded transition-colors"
+                  onBlur={() => setConfirmDeleteId(null)}
+                  className={`p-1.5 rounded transition-colors ${
+                    confirmDeleteId === project.id
+                      ? 'text-white bg-red-500 hover:bg-red-600'
+                      : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
+                  }`}
+                  title={confirmDeleteId === project.id ? 'Click again to confirm' : 'Delete project'}
                 >
                   <Trash2 size={14} />
                 </button>
