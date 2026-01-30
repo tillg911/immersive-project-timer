@@ -15,6 +15,16 @@ export interface TimeLogEntry {
       endTime: number | null;
       duration: number;
     }[];
+    // Daily description (set per day, not stored in project)
+    description?: string;
+    // CSV Export fields (copied from project)
+    ignoreForCsvExport?: boolean;
+    jobCode?: string;
+    internalDescription?: string;
+    workpackage?: string;
+    customer?: string;
+    projectCode?: string;
+    km?: number;
   }[];
 }
 
@@ -30,7 +40,8 @@ async function ensureLogsDir() {
 export async function saveTimeLog(
   date: string,
   projectTimes: Record<string, ProjectTime>,
-  projects: Project[]
+  projects: Project[],
+  projectDescriptions?: Record<string, string>
 ): Promise<void> {
   await ensureLogsDir();
 
@@ -43,6 +54,16 @@ export async function saveTimeLog(
       color: p.color,
       totalTime: projectTimes[p.id].totalTime,
       sessions: projectTimes[p.id].sessions,
+      // Daily description
+      description: projectDescriptions?.[p.id],
+      // CSV Export fields
+      ignoreForCsvExport: p.ignoreForCsvExport,
+      jobCode: p.jobCode,
+      internalDescription: p.internalDescription,
+      workpackage: p.workpackage,
+      customer: p.customer,
+      projectCode: p.projectCode,
+      km: p.km,
     }));
 
   const entry: TimeLogEntry = {
@@ -96,10 +117,11 @@ export async function updateTimeLogEntry(
 
 export async function saveCurrentDayLog(
   projectTimes: Record<string, ProjectTime>,
-  projects: Project[]
+  projects: Project[],
+  projectDescriptions?: Record<string, string>
 ): Promise<void> {
   const today = new Date().toISOString().split('T')[0];
-  await saveTimeLog(today, projectTimes, projects);
+  await saveTimeLog(today, projectTimes, projects, projectDescriptions);
 }
 
 export async function getAllLogDates(): Promise<string[]> {
@@ -126,4 +148,27 @@ export async function getAllLogDates(): Promise<string[]> {
   }
 
   return dates;
+}
+
+export async function loadMonthLogs(yearMonth: string): Promise<TimeLogEntry[]> {
+  const logs: TimeLogEntry[] = [];
+  const [year, month] = yearMonth.split('-').map(Number);
+
+  // Get the number of days in the month
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+    try {
+      const log = await loadTimeLog(dateStr);
+      if (log) {
+        logs.push(log);
+      }
+    } catch {
+      // Ignore errors for individual days
+    }
+  }
+
+  return logs;
 }
