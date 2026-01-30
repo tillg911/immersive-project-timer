@@ -196,26 +196,12 @@ export function ProjectEditor() {
                 </div>
                 <span className="text-sm font-medium text-gray-700">{project.name}</span>
               </div>
-              <div className="flex gap-1">
-                <button
-                  onClick={() => startEdit(project)}
-                  className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-gray-100 rounded transition-colors"
-                >
-                  <Pencil size={14} />
-                </button>
-                <button
-                  onClick={() => handleDelete(project.id)}
-                  onBlur={() => setConfirmDeleteId(null)}
-                  className={`p-1.5 rounded transition-colors ${
-                    confirmDeleteId === project.id
-                      ? 'text-white bg-red-500 hover:bg-red-600'
-                      : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
-                  }`}
-                  title={confirmDeleteId === project.id ? 'Click again to confirm' : 'Delete project'}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
+              <button
+                onClick={() => startEdit(project)}
+                className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-gray-100 rounded transition-colors"
+              >
+                <Pencil size={14} />
+              </button>
             </div>
           );
         })}
