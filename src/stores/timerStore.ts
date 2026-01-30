@@ -24,6 +24,7 @@ interface TimerState {
   projectTimes: Record<string, ProjectTime>;
   currentDate: string;
   isDayLimitReached: boolean;
+  projectDescriptions: Record<string, string>;
 }
 
 interface TimerStore extends TimerState {
@@ -35,6 +36,8 @@ interface TimerStore extends TimerState {
   resetDay: () => Record<string, ProjectTime>;
   getActiveElapsed: () => number;
   tick: () => void;
+  setProjectDescription: (projectId: string, description: string) => void;
+  getProjectDescription: (projectId: string) => string;
 }
 
 const getToday = () => new Date().toISOString().split('T')[0];
@@ -47,6 +50,7 @@ export const useTimerStore = create<TimerStore>()(
       projectTimes: {},
       currentDate: getToday(),
       isDayLimitReached: false,
+      projectDescriptions: {},
 
       startTimer: (projectId: string) => {
         const state = get();
@@ -211,6 +215,7 @@ export const useTimerStore = create<TimerStore>()(
           projectTimes: {},
           currentDate: getToday(),
           isDayLimitReached: false,
+          projectDescriptions: {},
         });
 
         return oldTimes;
@@ -270,6 +275,19 @@ export const useTimerStore = create<TimerStore>()(
           });
         }
       },
+
+      setProjectDescription: (projectId: string, description: string) => {
+        set((state) => ({
+          projectDescriptions: {
+            ...state.projectDescriptions,
+            [projectId]: description,
+          },
+        }));
+      },
+
+      getProjectDescription: (projectId: string) => {
+        return get().projectDescriptions[projectId] || '';
+      },
     }),
     {
       name: 'timer-storage',
@@ -280,10 +298,10 @@ export const useTimerStore = create<TimerStore>()(
 
 // Subscribe to store changes and auto-save to JSON file
 useTimerStore.subscribe((state, prevState) => {
-  // Only save when projectTimes change (timer started/stopped)
-  if (state.projectTimes !== prevState.projectTimes) {
+  // Save when projectTimes or projectDescriptions change
+  if (state.projectTimes !== prevState.projectTimes || state.projectDescriptions !== prevState.projectDescriptions) {
     const projects = useProjectStore.getState().projects;
-    saveCurrentDayLog(state.projectTimes, projects).catch((error) => {
+    saveCurrentDayLog(state.projectTimes, projects, state.projectDescriptions).catch((error) => {
       console.error('Failed to auto-save time log:', error);
     });
   }

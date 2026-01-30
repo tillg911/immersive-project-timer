@@ -23,6 +23,14 @@ interface ProjectFormData {
   name: string;
   color: string;
   icon: string;
+  // CSV Export fields
+  ignoreForCsvExport: boolean;
+  jobCode: string;
+  internalDescription: string;
+  workpackage: string;
+  customer: string;
+  projectCode: string;
+  km: string;
 }
 
 export function ProjectEditor() {
@@ -35,6 +43,13 @@ export function ProjectEditor() {
     name: '',
     color: COLORS[0],
     icon: 'Briefcase',
+    ignoreForCsvExport: false,
+    jobCode: '',
+    internalDescription: '',
+    workpackage: '',
+    customer: '',
+    projectCode: '',
+    km: '',
   });
 
   const startEdit = (project: Project) => {
@@ -43,6 +58,13 @@ export function ProjectEditor() {
       name: project.name,
       color: project.color,
       icon: project.icon,
+      ignoreForCsvExport: project.ignoreForCsvExport || false,
+      jobCode: project.jobCode || '',
+      internalDescription: project.internalDescription || '',
+      workpackage: project.workpackage || '',
+      customer: project.customer || '',
+      projectCode: project.projectCode || '',
+      km: project.km !== undefined ? String(project.km) : '',
     });
     setIsAdding(false);
   };
@@ -54,16 +76,36 @@ export function ProjectEditor() {
       name: '',
       color: COLORS[projects.length % COLORS.length],
       icon: 'Briefcase',
+      ignoreForCsvExport: false,
+      jobCode: '',
+      internalDescription: '',
+      workpackage: '',
+      customer: '',
+      projectCode: '',
+      km: '',
     });
   };
 
   const save = () => {
     if (!formData.name.trim()) return;
 
+    const projectData = {
+      name: formData.name,
+      color: formData.color,
+      icon: formData.icon,
+      ignoreForCsvExport: formData.ignoreForCsvExport || undefined,
+      jobCode: formData.jobCode || undefined,
+      internalDescription: formData.internalDescription || undefined,
+      workpackage: formData.workpackage || undefined,
+      customer: formData.customer || undefined,
+      projectCode: formData.projectCode || undefined,
+      km: formData.km ? parseFloat(formData.km) : undefined,
+    };
+
     if (isAdding) {
-      addProject(formData);
+      addProject(projectData);
     } else if (editingId) {
-      updateProject(editingId, formData);
+      updateProject(editingId, projectData);
     }
 
     cancel();
@@ -72,7 +114,18 @@ export function ProjectEditor() {
   const cancel = () => {
     setEditingId(null);
     setIsAdding(false);
-    setFormData({ name: '', color: COLORS[0], icon: 'Briefcase' });
+    setFormData({
+      name: '',
+      color: COLORS[0],
+      icon: 'Briefcase',
+      ignoreForCsvExport: false,
+      jobCode: '',
+      internalDescription: '',
+      workpackage: '',
+      customer: '',
+      projectCode: '',
+      km: '',
+    });
   };
 
   const handleDelete = (id: string) => {
@@ -138,6 +191,90 @@ export function ProjectEditor() {
           onChange={(icon) => setFormData({ ...formData, icon })}
           color={formData.color}
         />
+      </div>
+
+      {/* CSV Export Settings */}
+      <div className="pt-2 border-t border-gray-200">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={formData.ignoreForCsvExport}
+            onChange={(e) => setFormData({ ...formData, ignoreForCsvExport: e.target.checked })}
+            className="w-3.5 h-3.5 rounded border-gray-300 text-indigo-500 focus:ring-indigo-500"
+          />
+          <span className="text-xs text-gray-600">Ignore for CSV export</span>
+        </label>
+
+        {/* CSV Export Details - hidden when ignored */}
+        {!formData.ignoreForCsvExport && (
+          <div className="mt-2">
+            <label className="block text-xs font-medium text-gray-500 mb-2">CSV Export Details</label>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[10px] text-gray-500 mb-0.5">Job Code</label>
+                <input
+                  type="text"
+                  value={formData.jobCode}
+                  onChange={(e) => setFormData({ ...formData, jobCode: e.target.value })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="e.g. 123456-789"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-gray-500 mb-0.5">Project Code</label>
+                <input
+                  type="text"
+                  value={formData.projectCode}
+                  onChange={(e) => setFormData({ ...formData, projectCode: e.target.value })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="External project ID"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-gray-500 mb-0.5">Customer</label>
+                <input
+                  type="text"
+                  value={formData.customer}
+                  onChange={(e) => setFormData({ ...formData, customer: e.target.value })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="Customer name"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-gray-500 mb-0.5">Workpackage</label>
+                <input
+                  type="text"
+                  value={formData.workpackage}
+                  onChange={(e) => setFormData({ ...formData, workpackage: e.target.value })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="Work package"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] text-gray-500 mb-0.5">KM</label>
+                <input
+                  type="number"
+                  value={formData.km}
+                  onChange={(e) => setFormData({ ...formData, km: e.target.value })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="0"
+                  min="0"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-[10px] text-gray-500 mb-0.5">Internal Description</label>
+                <input
+                  type="text"
+                  value={formData.internalDescription}
+                  onChange={(e) => setFormData({ ...formData, internalDescription: e.target.value })}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  placeholder="Internal notes"
+                />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

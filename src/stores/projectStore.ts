@@ -7,6 +7,14 @@ export interface Project {
   color: string;
   icon: string;
   archived?: boolean;
+  // CSV Export fields
+  ignoreForCsvExport?: boolean;
+  jobCode?: string;
+  internalDescription?: string;
+  workpackage?: string;
+  customer?: string;
+  projectCode?: string;
+  km?: number;
 }
 
 interface ProjectStore {
